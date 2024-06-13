@@ -94,30 +94,35 @@ namespace Quote
                 tourQuotes = tourQuotes.Where(w => selectedServicesCodes.Contains(w.ContractService.ServiceCode)).ToList();
             }
 
-            var baseSelectedQuote = tourQuotes.First();
-            var margin = .25;
             TourCalculatedQuote calculatedQuote = null;
-            if (request.RetrieveOptions.GetCalculatedQuote)
-            {
-                calculatedQuote = new TourCalculatedQuote()
-                {
-                    baseSelectedQuote = baseSelectedQuote,
-                    allSelectedQuotes = tourQuotes,
-                    maxPax = baseSelectedQuote.maxPax,
-                    Tour = tour,
-                    services = activityServices,
-                    Margin = (double)margin,
-                    EngineVersion = 1
-                };
 
-                foreach (var tourQuote in tourQuotes)
+            if (tourQuotes.Count() > 0) {
+                var baseSelectedQuote = tourQuotes.First();
+                var margin = .25;
+                
+                if (request.RetrieveOptions.GetCalculatedQuote)
                 {
-                    var modality = activity.Activity.Modalities.FirstOrDefault(f => f.Code == tourQuote.ContractService.ServiceCode);
-                    this.SetTourCalculatedQuote(request, calculatedQuote, tourQuote, modality, exchangeRate);
+                    calculatedQuote = new TourCalculatedQuote()
+                    {
+                        baseSelectedQuote = baseSelectedQuote,
+                        allSelectedQuotes = tourQuotes,
+                        maxPax = baseSelectedQuote.maxPax,
+                        Tour = tour,
+                        services = activityServices,
+                        Margin = (double)margin,
+                        EngineVersion = 1
+                    };
+
+                    foreach (var tourQuote in tourQuotes)
+                    {
+                        var modality = activity.Activity.Modalities.FirstOrDefault(f => f.Code == tourQuote.ContractService.ServiceCode);
+                        this.SetTourCalculatedQuote(request, calculatedQuote, tourQuote, modality, exchangeRate);
+                    }
+
+                    calculatedQuote.CancellationPolicies = this.GetCancellationPolicies(request, calculatedQuote, currency, modalities);
                 }
-
-                calculatedQuote.CancellationPolicies = this.GetCancellationPolicies(request, calculatedQuote, currency, modalities);
             }
+            
 
             var result = new TourQuoteResponse()
             {
